@@ -1,7 +1,7 @@
 """Check whether an .h5ad file's obs_names (cell barcodes) are actually unique.
 At least one released file in this Challenge has duplicated barcodes from a
 segmentation-pipeline artifact (same slide/section, different internal
-sample_id) -- joining on obs_names there will silently merge unrelated cells.
+sample_id) -- joining on obs_names there will merge unrelated cells.
 
 Usage:
     python check_duplicate_obs_names.py path/to/file.h5ad

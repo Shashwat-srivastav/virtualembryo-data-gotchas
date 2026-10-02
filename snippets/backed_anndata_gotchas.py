@@ -1,4 +1,4 @@
-"""Demonstrates two real gotchas with backed=('r') AnnData views (common on
+"""Demonstrates two gotchas with backed=('r') AnnData views (common on
 these files, which run gigabytes each) and the working pattern for each.
 
 Usage:
@@ -30,19 +30,17 @@ def demo(h5ad_path: str):
     coords = np.asarray(view.obsm["spatial_3D"]) if "spatial_3D" in view.obsm else None
     print(f"materialized only what's needed: X{X.shape}"
           + (f", spatial_3D{coords.shape}" if coords is not None else ", no spatial_3D")
-          + " -- obs/uns/varm left untouched")
+          + ", obs/uns/varm left untouched")
 
     # Gotcha 2: row-slicing a CSC-stored matrix. A CSC (compressed-sparse-column)
-    # matrix stores data column-major, so ANY row access touches every column's
-    # data structure -- but a contiguous row BLOCK is still far cheaper to
-    # materialize than a scattered random subsample of the same size, because
-    # the block lets each column's slice be a single contiguous range instead
-    # of a fancy-index gather.
+    # matrix stores data column-major, so any row access touches every column's
+    # data structure, and scattered row indices are slow. A contiguous block is
+    # faster but is one spatial region of the embryo (README, gotcha 7), so do
+    # not use it for anything you submit or score.
     print(f"\nX format on disk: {type(a.X).__name__ if not hasattr(a.X, 'format') else a.X.format}")
-    print("  if this says 'csc': prefer view = a[start:start+n] (contiguous block)")
-    print("  over view = a[random_indices] (scattered fancy-index) when both are")
-    print("  equally valid for your use case -- the contiguous version is much")
-    print("  cheaper to materialize on a large CSC-backed file.")
+    print("  if this says 'csc': sample rows at random, sort the indices first")
+    print("  (a[np.sort(idx)]) or read X into memory once and sample from that.")
+    print("  Avoid a[start:start+n] for submissions: rows are in spatial order.")
 
 
 if __name__ == "__main__":
